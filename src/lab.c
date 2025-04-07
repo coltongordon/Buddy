@@ -28,17 +28,90 @@ do \
 * @param bytes the number of bytes
 * @return size_t the K value that will fit bytes
 */
+/**
+ * @brief Convert bytes to the correct K value
+ *
+ * This function calculates the smallest power of 2 (K) that can accommodate
+ * the given number of bytes. The K value is used in the buddy memory allocation
+ * system to determine the size class of memory blocks.
+ *
+ * Instructions to implement:
+ * 1. Validate the input parameter `bytes` to ensure it is greater than zero.
+ * 2. Start with an initial K value of 0.
+ * 3. Use a loop to repeatedly shift the value 1 (representing 2^K) to the left
+ *    until it is greater than or equal to `bytes`.
+ * 4. Increment the K value during each iteration of the loop.
+ * 5. Return the calculated K value.
+ *
+ * Notes:
+ * - Avoid using floating-point operations or math libraries like `math.pow`.
+ * - Ensure the function handles edge cases, such as very small or very large
+ *   values of `bytes`.
+ */
 size_t btok(size_t bytes)
 {
 //DO NOT use math.pow
 }
 
 
+/**
+ * Calculates the buddy block for a given block in a buddy memory pool.
+ *
+ * @param pool A pointer to the buddy memory pool structure. This structure
+ *             contains information about the memory pool and its configuration.
+ * @param buddy A pointer to the structure representing the block for which
+ *              the buddy block needs to be calculated. This structure should
+ *              contain details such as the block's address or index.
+ * 
+ * @return A pointer to the structure representing the calculated buddy block.
+ *         This structure will contain the details of the buddy block, such as
+ *         its address or index.
+ *
+ * Instructions to implement:
+ * - Use the block's address or index to determine its buddy block.
+ * - Ensure the calculation adheres to the buddy memory allocation algorithm.
+ * - Validate the input parameters to ensure they are not NULL and are within
+ *   the bounds of the memory pool.
+ * - Return the calculated buddy block structure or handle errors appropriately
+ *   if the calculation fails.
+ */
 struct avail *buddy_calc(struct buddy_pool *pool, struct avail *buddy)
 {
 }
 
 
+/**
+ * Allocates a block of memory from the buddy memory pool.
+ *
+ * This function implements the buddy memory allocation algorithm, which is 
+ * designed to efficiently allocate and free memory blocks of sizes that are 
+ * powers of two. It takes a pointer to a buddy memory pool and the requested 
+ * size of memory to allocate.
+ *
+ * Instructions to implement this function:
+ * 1. Validate the input parameters:
+ *    - Ensure the `pool` pointer is not NULL.
+ *    - Ensure the requested `size` is greater than zero.
+ * 2. Adjust the requested size to the nearest power of two that can accommodate it.
+ * 3. Traverse the buddy memory pool to find a free block of the appropriate size:
+ *    - If a larger block is found, split it into smaller blocks until the desired size is reached.
+ *    - Mark the allocated block as used.
+ * 4. Return a pointer to the allocated memory block.
+ * 5. If no suitable block is available, return NULL to indicate allocation failure.
+ *
+ * Parameters:
+ * - pool: A pointer to the buddy memory pool from which memory is to be allocated.
+ * - size: The size of the memory block to allocate (in bytes).
+ *
+ * Returns:
+ * - A pointer to the allocated memory block on success.
+ * - NULL if the allocation fails due to insufficient memory or invalid input.
+ *
+ * Notes:
+ * - Ensure thread safety if the buddy memory pool is accessed concurrently.
+ * - Consider implementing coalescing of adjacent free blocks during deallocation
+ *   to optimize memory usage.
+ */
 void *buddy_malloc(struct buddy_pool *pool, size_t size)
 {
 //get the kval for the requested size with enough room for the tag and kval
@@ -52,6 +125,26 @@ and return NULL
 }
 
 
+/**
+ * Frees a previously allocated memory block in the buddy memory pool.
+ *
+ * This function is responsible for returning a memory block, identified by 
+ * the pointer `ptr`, back to the buddy memory pool `pool`. It should:
+ * 
+ * 1. Validate the input parameters to ensure `ptr` is within the bounds of 
+ *    the memory pool and that `pool` is not NULL.
+ * 2. Determine the size of the block being freed based on the buddy system 
+ *    allocation rules.
+ * 3. Mark the block as free in the buddy system's internal data structures.
+ * 4. Coalesce adjacent free blocks, if possible, to maintain the buddy system's 
+ *    efficiency and reduce fragmentation.
+ * 
+ * Proper error handling should be implemented to handle invalid inputs or 
+ * inconsistencies in the memory pool's state.
+ *
+ * @param pool A pointer to the buddy memory pool structure.
+ * @param ptr  A pointer to the memory block to be freed.
+ */
 void buddy_free(struct buddy_pool *pool, void *ptr)
 {
 }
