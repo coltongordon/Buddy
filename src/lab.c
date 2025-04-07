@@ -17,9 +17,11 @@
 #define handle_error_and_die(msg) \
 do \
 { \
-perror(msg); \
-raise(SIGKILL); \
+    perror(msg); \
+    raise(SIGKILL); \
 } while (0)
+
+
 /**
 * @brief Convert bytes to the correct K value
 *
@@ -30,9 +32,13 @@ size_t btok(size_t bytes)
 {
 //DO NOT use math.pow
 }
+
+
 struct avail *buddy_calc(struct buddy_pool *pool, struct avail *buddy)
 {
 }
+
+
 void *buddy_malloc(struct buddy_pool *pool, size_t size)
 {
 //get the kval for the requested size with enough room for the tag and kval
@@ -44,9 +50,14 @@ and return NULL
 //R3 Split required?
 //R4 Split the block
 }
+
+
 void buddy_free(struct buddy_pool *pool, void *ptr)
 {
 }
+
+
+
 /**
 * @brief This is a simple version of realloc.
 *
@@ -55,11 +66,10 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
 * @param size the new size requested
 * @return void* pointer to the new user memory
 */
-void *buddy_realloc(struct buddy_pool *pool, void *ptr, size_t size)
-{
-//Required for Grad Students
-//Optional for Undergrad Students
-}
+
+
+
+
 void buddy_init(struct buddy_pool *pool, size_t size)
 {
 size_t kval = 0;
