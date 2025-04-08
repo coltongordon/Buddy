@@ -269,6 +269,12 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
     // Check if the coalesced block spans the entire pool
     if (block->kval == pool->kval_m && block == (struct avail *)pool->base) {
         // Reset the pool to its initial state
+        // Ensure pool->avail is allocated with enough memory
+        pool->avail = (struct avail *)malloc((pool->kval_m + 1) * sizeof(struct avail));
+        if (pool->avail == NULL) {
+            handle_error_and_die("Memory allocation for pool->avail failed");
+        }
+
         for (size_t i = 0; i <= pool->kval_m; i++) {
             pool->avail[i].next = pool->avail[i].prev = &pool->avail[i];
         }
