@@ -165,6 +165,11 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
         kval++;
     }
 
+    if (kval < SMALLEST_K && pool->kval_m < SMALLEST_K)
+    {
+        kval = SMALLEST_K;
+    }
+
     // Find a block
     for (size_t i = kval; i <= pool->kval_m; i++)
     {
