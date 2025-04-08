@@ -162,7 +162,7 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
     // R1: Find a block
     for (size_t i = kval; i <= pool->kval_m; i++)
     {
-        if (pool->avail[i].next != &pool->avail[i])
+        if (pool->avail[i].next != NULL && pool->avail[i].next != &pool->avail[i])
         {
             // R2: Remove from list
             struct avail *block = pool->avail[i].next;
