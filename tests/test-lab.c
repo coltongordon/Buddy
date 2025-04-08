@@ -90,7 +90,7 @@ void test_buddy_malloc_one_large(void)
   assert(tmp->tag == BLOCK_RESERVED);
   check_buddy_pool_empty(&pool);
   //Verify that a call on an empty tool fails as expected and errno is set to
-  ENOMEM.
+  // ENOMEM.
   void *fail = buddy_malloc(&pool, 5);
   assert(fail == NULL);
   assert(errno = ENOMEM);
@@ -108,9 +108,9 @@ void test_buddy_init(void)
 {
   fprintf(stderr, "->Testing buddy init\n");
   //Loop through all kval MIN_k-DEFAULT_K and make sure we get the correct amount
-  allocated.
+  // allocated.
   //We will check all the pointer offsets to ensure the pool is all configured
-  correctly
+  // correctly
   for (size_t i = MIN_K; i <= DEFAULT_K; i++)
   {
     size_t size = UINT64_C(1) << i;
@@ -120,6 +120,9 @@ void test_buddy_init(void)
     buddy_destroy(&pool);
   }
 }
+
+
+
 int main(void) {
 time_t t;
   unsigned seed = (unsigned)time(&t);
