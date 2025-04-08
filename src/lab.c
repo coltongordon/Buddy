@@ -169,6 +169,10 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
     {
         kval = SMALLEST_K;
     }
+
+    if (i == pool->kval_m) {
+        block->tag = BLOCK_RESERVED;
+    }
     
 
     // Find a block
