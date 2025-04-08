@@ -181,6 +181,9 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
             block->prev->next = block->next;
             block->next->prev = block->prev;
 
+            // Set block kval BEFORE splitting (even if not splitting)
+            block->kval = i;
+
             // Split required?
             while (i > kval && i > MIN_K)
             {
