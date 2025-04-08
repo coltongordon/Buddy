@@ -265,6 +265,7 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
     block->prev = &pool->avail[block->kval];
     pool->avail[block->kval].next->prev = block;
     pool->avail[block->kval].next = block;
+    block->tag = BLOCK_AVAIL; // Ensure the tag is set to BLOCK_AVAIL
 
     // Check if the coalesced block spans the entire pool
     if (block->kval == pool->kval_m && block == (struct avail *)pool->base) {
