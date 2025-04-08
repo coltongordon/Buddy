@@ -180,6 +180,13 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
             block->prev->next = block->next;
             block->next->prev = block->prev;
 
+            // Check if the block size matches the entire pool size
+            if (i == pool->kval_m) {
+                block->tag = BLOCK_RESERVED; // Mark as reserved if it matches the entire pool size
+            } else {
+                block->tag = BLOCK_USED; // Mark as used for other cases
+            }
+
             // Set block kval BEFORE splitting (even if not splitting)
             block->kval = i;
 
