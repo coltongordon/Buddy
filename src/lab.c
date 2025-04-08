@@ -170,7 +170,7 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
             block->next->prev = block->prev;
 
             // R3: Split required?
-            while (i > kval)
+            while (i > kval && i > MIN_K)
             {
                 i--;
                 size_t block_size = UINT64_C(1) << i;
