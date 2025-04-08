@@ -153,7 +153,7 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
     size += sizeof(struct avail);
 
     // Get the kval for the requested size
-    size_t kval = 0;
+    size_t kval = MIN_K;
     while ((UINT64_C(1) << kval) < size)
     {
         kval++;
@@ -263,6 +263,13 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
     block->prev = &pool->avail[block->kval];
     pool->avail[block->kval].next->prev = block;
     pool->avail[block->kval].next = block;
+
+    // Check if the coalesced block spans the entire pool
+    if (block->kval == pool->kval_m && block == (struct avail *)pool->base) {
+        // Reset the pool to its initial state
+        pool->avail[block->kval].next = pool->avail[block->kval].prev = block;
+        block->next = block->prev = &pool->avail[block->kval];
+    }
 }
 
 
