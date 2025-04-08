@@ -50,6 +50,24 @@ do \
  */
 size_t btok(size_t bytes)
 {
+    // Ensure the input is greater than zero
+    assert(bytes > 0);
+
+    // Add the size of the header to the requested bytes
+    bytes += sizeof(struct avail);
+
+    // Initialize K value
+    size_t kval = 0;
+
+    // Calculate the smallest power of 2 (K) that can accommodate the bytes
+    while ((UINT64_C(1) << kval) < bytes)
+    {
+        kval++;
+    }
+
+    return kval;
+}
+{
 //DO NOT use math.pow
 }
 
@@ -77,8 +95,21 @@ size_t btok(size_t bytes)
  */
 struct avail *buddy_calc(struct buddy_pool *pool, struct avail *buddy)
 {
-}
+    assert(pool != NULL);
+    assert(buddy != NULL);
 
+    // Calculate the offset of the buddy block
+    size_t block_offset = (unsigned char *)buddy - (unsigned char *)pool->base;
+
+    // Calculate the size of the block using its kval
+    size_t block_size = UINT64_C(1) << buddy->kval;
+
+    // XOR the block offset with the block size to find the buddy's offset
+    size_t buddy_offset = block_offset ^ block_size;
+
+    // Return the pointer to the buddy block
+    return (struct avail *)((unsigned char *)pool->base + buddy_offset);
+}
 
 /**
  * Allocates a block of memory from the buddy memory pool.
@@ -111,19 +142,60 @@ struct avail *buddy_calc(struct buddy_pool *pool, struct avail *buddy)
  * - Ensure thread safety if the buddy memory pool is accessed concurrently.
  * - Consider implementing coalescing of adjacent free blocks during deallocation
  *   to optimize memory usage.
+ * - Handle edge cases, such as alignment requirements and minimum block sizes.
  */
 void *buddy_malloc(struct buddy_pool *pool, size_t size)
 {
-//get the kval for the requested size with enough room for the tag and kval
-fields
-//R1 Find a block
-//There was not enough memory to satisfy the request thus we need to set error
-and return NULL
-//R2 Remove from list;
-//R3 Split required?
-//R4 Split the block
-}
+    assert(pool != NULL);
+    assert(size > 0);
 
+    // Add header size to the requested size
+    size += sizeof(struct avail);
+
+    // Get the kval for the requested size
+    size_t kval = 0;
+    while ((UINT64_C(1) << kval) < size)
+    {
+        kval++;
+    }
+
+    // R1: Find a block
+    for (size_t i = kval; i <= pool->kval_m; i++)
+    {
+        if (pool->avail[i].next != &pool->avail[i])
+        {
+            // R2: Remove from list
+            struct avail *block = pool->avail[i].next;
+            block->prev->next = block->next;
+            block->next->prev = block->prev;
+
+            // R3: Split required?
+            while (i > kval)
+            {
+                i--;
+                size_t block_size = UINT64_C(1) << i;
+                struct avail *buddy = (struct avail *)((unsigned char *)block + block_size);
+
+                // R4: Split the block
+                buddy->tag = BLOCK_AVAIL;
+                buddy->kval = i;
+                buddy->next = &pool->avail[i];
+                buddy->prev = pool->avail[i].prev;
+                pool->avail[i].prev->next = buddy;
+                pool->avail[i].prev = buddy;
+
+                block->kval = i;
+            }
+
+            block->tag = BLOCK_USED;
+            return (void *)((unsigned char *)block + sizeof(struct avail));
+        }
+    }
+
+    // No suitable block found
+    errno = ENOMEM;
+    return NULL;
+}
 
 /**
  * Frees a previously allocated memory block in the buddy memory pool.
@@ -147,6 +219,50 @@ and return NULL
  */
 void buddy_free(struct buddy_pool *pool, void *ptr)
 {
+    assert(pool != NULL);
+    assert(ptr != NULL);
+
+    // Calculate the address of the block header
+    struct avail *block = (struct avail *)((unsigned char *)ptr - sizeof(struct avail));
+
+    // Validate that the block is within the pool's memory range
+    assert((unsigned char *)block >= (unsigned char *)pool->base);
+    assert((unsigned char *)block < (unsigned char *)pool->base + pool->numbytes);
+
+    // Mark the block as available
+    block->tag = BLOCK_AVAIL;
+
+    // Coalesce adjacent free blocks
+    while (true)
+    {
+        // Calculate the buddy block
+        struct avail *buddy = buddy_calc(pool, block);
+
+        // Check if the buddy block is free and has the same kval
+        if (buddy->tag != BLOCK_AVAIL || buddy->kval != block->kval)
+        {
+            break;
+        }
+
+        // Remove the buddy block from its free list
+        buddy->prev->next = buddy->next;
+        buddy->next->prev = buddy->prev;
+
+        // Determine the lower address between the block and its buddy
+        if (buddy < block)
+        {
+            block = buddy;
+        }
+
+        // Increase the kval of the coalesced block
+        block->kval++;
+    }
+
+    // Add the coalesced block back to the free list
+    block->next = pool->avail[block->kval].next;
+    block->prev = &pool->avail[block->kval];
+    pool->avail[block->kval].next->prev = block;
+    pool->avail[block->kval].next = block;
 }
 
 
