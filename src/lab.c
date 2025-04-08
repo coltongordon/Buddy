@@ -67,9 +67,7 @@ size_t btok(size_t bytes)
 
     return kval;
 }
-{
-//DO NOT use math.pow
-}
+
 
 
 /**
