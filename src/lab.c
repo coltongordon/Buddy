@@ -273,6 +273,7 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
             pool->avail[i].next = pool->avail[i].prev = &pool->avail[i];
         }
         block->next = block->prev = &pool->avail[block->kval];
+        block->tag = BLOCK_AVAIL; // Ensure the tag is reset to BLOCK_AVAIL
     }
 }
 
