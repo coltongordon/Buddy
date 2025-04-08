@@ -159,30 +159,24 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
         kval++;
     }
 
-    // Ensure kval is at least MIN_K
-    if (kval < MIN_K)
-    {
-        kval = MIN_K;
-    }
-
-    // R1: Find a block
+    // Find a block
     for (size_t i = kval; i <= pool->kval_m; i++)
     {
-        if (pool->avail[i].next != NULL && pool->avail[i].next != &pool->avail[i])
+        if (pool->avail[i].next != &pool->avail[i])
         {
-            // R2: Remove from list
+            // Remove from list
             struct avail *block = pool->avail[i].next;
             block->prev->next = block->next;
             block->next->prev = block->prev;
 
-            // R3: Split required?
-            while (i > kval && i > MIN_K)
+            // Split required?
+            while (i > kval)
             {
                 i--;
                 size_t block_size = UINT64_C(1) << i;
                 struct avail *buddy = (struct avail *)((unsigned char *)block + block_size);
 
-                // R4: Split the block
+                // Split the block
                 buddy->tag = BLOCK_AVAIL;
                 buddy->kval = i;
                 buddy->next = &pool->avail[i];
@@ -193,7 +187,7 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
                 block->kval = i;
             }
 
-            block->tag = BLOCK_RESERVED;
+            block->tag = BLOCK_USED;
             return (void *)((unsigned char *)block + sizeof(struct avail));
         }
     }
@@ -245,9 +239,7 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
         struct avail *buddy = buddy_calc(pool, block);
 
         // Check if the buddy block is free and has the same kval
-        if ((unsigned char *)buddy < (unsigned char *)pool->base ||
-            (unsigned char *)buddy >= (unsigned char *)pool->base + pool->numbytes ||
-            buddy->tag != BLOCK_AVAIL || buddy->kval != block->kval)
+        if (buddy->tag != BLOCK_AVAIL || buddy->kval != block->kval)
         {
             break;
         }
@@ -271,17 +263,6 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
     block->prev = &pool->avail[block->kval];
     pool->avail[block->kval].next->prev = block;
     pool->avail[block->kval].next = block;
-    block->tag = BLOCK_AVAIL; // Ensure the tag is set to BLOCK_AVAIL
-
-    // Check if the coalesced block spans the entire pool
-    if (block->kval == pool->kval_m && block == (struct avail *)pool->base) {
-        // Reset the pool to its initial state
-        for (size_t i = 0; i <= pool->kval_m; i++) {
-            pool->avail[i].next = pool->avail[i].prev = &pool->avail[i];
-        }
-        block->next = block->prev = &pool->avail[block->kval];
-        block->tag = BLOCK_AVAIL; // Ensure the tag is reset to BLOCK_AVAIL
-    }
 }
 
 
