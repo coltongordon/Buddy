@@ -170,11 +170,6 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
         kval = SMALLEST_K;
     }
 
-    if (i == pool->kval_m) {
-        block->tag = BLOCK_RESERVED;
-    }
-    
-
     // Find a block
     for (size_t i = kval; i <= pool->kval_m; i++)
     {
@@ -208,10 +203,13 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
 
             // Check if the block size matches the entire pool size
             if (i == pool->kval_m) {
-                block->tag = BLOCK_RESERVED;
+                block->tag = BLOCK_RESERVED; // Mark as reserved if it matches the entire pool size
             } else {
-                block->tag = BLOCK_USED;
+                block->tag = BLOCK_USED; // Mark as used for other cases
             }
+            
+            // Ensure the block's tag is consistent before returning
+            assert(block->tag == BLOCK_RESERVED || block->tag == BLOCK_USED);
             return (void *)((unsigned char *)block + sizeof(struct avail));
         }
     }
