@@ -170,7 +170,7 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
             block->next->prev = block->prev;
 
             // Split required?
-            while (i > kval)
+            while (i > kval && i > MIN_K)
             {
                 i--;
                 size_t block_size = UINT64_C(1) << i;
@@ -239,7 +239,9 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
         struct avail *buddy = buddy_calc(pool, block);
 
         // Check if the buddy block is free and has the same kval
-        if (buddy->tag != BLOCK_AVAIL || buddy->kval != block->kval)
+        if ((unsigned char *)buddy < (unsigned char *)pool->base || 
+            (unsigned char *)buddy >= (unsigned char *)pool->base + pool->numbytes || 
+            buddy->tag != BLOCK_AVAIL || buddy->kval != block->kval)
         {
             break;
         }
