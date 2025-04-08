@@ -21,6 +21,8 @@ do \
     raise(SIGKILL); \
 } while (0)
 
+#define BLOCK_USED 1
+
 
 /**
 * @brief Convert bytes to the correct K value
@@ -306,11 +308,11 @@ if (MAP_FAILED == pool->base)
 handle_error_and_die("buddy_init avail array mmap failed");
 }
 //Set all blocks to empty. We are using circular lists so the first elements
-just point
+//just point
 //to an available block. Thus the tag, and kval feild are unused burning a
-small bit of
+//small bit of
 //memory but making the code more readable. We mark these blocks as UNUSED to
-aid in debugging.
+//aid in debugging.
 for (size_t i = 0; i <= kval; i++)
 {
 pool->avail[i].next = pool->avail[i].prev = &pool->avail[i];
