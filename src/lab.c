@@ -152,6 +152,12 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
     // Add header size to the requested size
     size += sizeof(struct avail);
 
+    // Check if the requested size exceeds the total pool size
+    if (size > (UINT64_C(1) << pool->kval_m)) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
     // Get the kval for the requested size
     size_t kval = MIN_K;
     while ((UINT64_C(1) << kval) < size)
