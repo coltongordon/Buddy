@@ -159,6 +159,12 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
         kval++;
     }
 
+    // Ensure kval is at least MIN_K
+    if (kval < MIN_K)
+    {
+        kval = MIN_K;
+    }
+
     // R1: Find a block
     for (size_t i = kval; i <= pool->kval_m; i++)
     {
