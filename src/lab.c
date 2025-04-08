@@ -269,7 +269,9 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
     // Check if the coalesced block spans the entire pool
     if (block->kval == pool->kval_m && block == (struct avail *)pool->base) {
         // Reset the pool to its initial state
-        pool->avail[block->kval].next = pool->avail[block->kval].prev = block;
+        for (size_t i = 0; i <= pool->kval_m; i++) {
+            pool->avail[i].next = pool->avail[i].prev = &pool->avail[i];
+        }
         block->next = block->prev = &pool->avail[block->kval];
     }
 }
