@@ -199,7 +199,12 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
                 block->kval = i;
             }
 
-            block->tag = BLOCK_USED;
+            // Check if the block size matches the entire pool size
+            if (i == pool->kval_m) {
+                block->tag = BLOCK_RESERVED;
+            } else {
+                block->tag = BLOCK_USED;
+            }
             return (void *)((unsigned char *)block + sizeof(struct avail));
         }
     }
