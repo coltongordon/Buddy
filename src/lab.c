@@ -198,7 +198,9 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
                 block->kval = i;
             }
 
-            block->tag = BLOCK_RESERVED; // Set the tag to BLOCK_RESERVED as expected by the test
+            if (block->tag == BLOCK_AVAIL) {
+                block->tag = BLOCK_RESERVED; // Set the tag to BLOCK_RESERVED as expected by the test
+            }
             return (void *)((unsigned char *)block + sizeof(struct avail));
         }
     }
