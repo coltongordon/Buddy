@@ -239,7 +239,9 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
         struct avail *buddy = buddy_calc(pool, block);
 
         // Check if the buddy block is free and has the same kval
-        if (buddy->tag != BLOCK_AVAIL || buddy->kval != block->kval)
+        if ((unsigned char *)buddy < (unsigned char *)pool->base ||
+            (unsigned char *)buddy >= (unsigned char *)pool->base + pool->numbytes ||
+            buddy->tag != BLOCK_AVAIL || buddy->kval != block->kval)
         {
             break;
         }
