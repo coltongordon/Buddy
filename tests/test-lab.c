@@ -121,6 +121,52 @@ void test_buddy_init(void)
   }
 }
 
+/**
+ * Test allocating multiple blocks of varying sizes and ensure proper behavior.
+ */
+void test_buddy_malloc_multiple_blocks(void) {
+  fprintf(stderr, "->Testing multiple block allocations\n");
+  struct buddy_pool pool;
+  size_t pool_size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, pool_size);
+
+  // Allocate a small block
+  void *block1 = buddy_malloc(&pool, 32);
+  assert(block1 != NULL);
+
+  // Allocate a medium block
+  void *block2 = buddy_malloc(&pool, 128);
+  assert(block2 != NULL);
+
+  // Allocate a large block
+  void *block3 = buddy_malloc(&pool, 512);
+  assert(block3 != NULL);
+
+  // Ensure the pool is not full
+  assert(pool.avail[DEFAULT_K].next != pool.base);
+
+  // Free the blocks
+  buddy_free(&pool, block1);
+  buddy_free(&pool, block2);
+  buddy_free(&pool, block3);
+
+  // Check if the pool is back to full state
+  check_buddy_pool_full(&pool);
+
+  buddy_destroy(&pool);
+}
+
+int main(void) {
+  time_t t;
+  unsigned seed = (unsigned)time(&t);
+  fprintf(stderr, "Random seed:%d\n", seed);
+  srand(seed);
+  printf("Running additional memory tests.\n");
+  UNITY_BEGIN();
+  RUN_TEST(test_buddy_malloc_multiple_blocks);
+  return UNITY_END();
+}
+
 
 
 int main(void) {
@@ -133,5 +179,6 @@ time_t t;
   RUN_TEST(test_buddy_init);
   RUN_TEST(test_buddy_malloc_one_byte);
   RUN_TEST(test_buddy_malloc_one_large);
+  RUN_TEST(test_buddy_malloc_multiple_blocks);
   return UNITY_END();
 }
