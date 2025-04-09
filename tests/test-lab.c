@@ -156,17 +156,6 @@ void test_buddy_malloc_multiple_blocks(void) {
   buddy_destroy(&pool);
 }
 
-int main(void) {
-  time_t t;
-  unsigned seed = (unsigned)time(&t);
-  fprintf(stderr, "Random seed:%d\n", seed);
-  srand(seed);
-  printf("Running additional memory tests.\n");
-  UNITY_BEGIN();
-  RUN_TEST(test_buddy_malloc_multiple_blocks);
-  return UNITY_END();
-}
-
 
 
 int main(void) {
