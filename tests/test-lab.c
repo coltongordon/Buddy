@@ -397,12 +397,6 @@ void test_buddy_malloc_exhaust_pool(void) {
     buddy_destroy(&pool);
     return;
   }
-  void **blocks = malloc(num_blocks * sizeof(void *));
-  if (blocks == NULL) {
-    fprintf(stderr, "Memory allocation failed\n");
-    buddy_destroy(&pool);
-    return;
-  }
 
   for (size_t i = 0; i < num_blocks; i++) {
     blocks[i] = buddy_malloc(&pool, block_size);
