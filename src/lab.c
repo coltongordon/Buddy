@@ -249,8 +249,10 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
  */
 void buddy_free(struct buddy_pool *pool, void *ptr)
 {
-    assert(pool != NULL);
-    assert(ptr != NULL);
+    if (pool == NULL || ptr == NULL) {
+        fprintf(stderr, "Error: Null pointer passed to buddy_free.\n");
+        return;
+    }
 
     // Calculate the address of the block header
     struct avail *block = (struct avail *)((unsigned char *)ptr - sizeof(struct avail));
