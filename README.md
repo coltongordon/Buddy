@@ -1,4 +1,5 @@
-# Makefile Project Template
+# CS 452 Buddy Project
+# Colton Gordon
 
 Steps to configure, build, run, and test the project.
 
