@@ -186,6 +186,124 @@ void test_btok_large_values(void) {
   fprintf(stderr, "Passed large values test\n");
 }
 
+/**
+ * Test buddy_calc with a valid buddy in the middle of the pool.
+ */
+void test_buddy_calc_middle(void) {
+  fprintf(stderr, "->Testing buddy_calc with a middle block\n");
+  struct buddy_pool pool;
+  size_t size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, size);
+
+  struct avail *block = pool.base;
+  block->kval = 3; // Assume block is at kval 3
+  struct avail *buddy = buddy_calc(&pool, block);
+
+  // Calculate expected buddy address
+  uintptr_t block_addr = (uintptr_t)block;
+  uintptr_t buddy_addr = block_addr ^ (UINT64_C(1) << block->kval);
+  assert((uintptr_t)buddy == buddy_addr);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test buddy_calc with the first block in the pool.
+ */
+void test_buddy_calc_first_block(void) {
+  fprintf(stderr, "->Testing buddy_calc with the first block\n");
+  struct buddy_pool pool;
+  size_t size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, size);
+
+  struct avail *block = pool.base;
+  block->kval = 2; // Assume block is at kval 2
+  struct avail *buddy = buddy_calc(&pool, block);
+
+  // Calculate expected buddy address
+  uintptr_t block_addr = (uintptr_t)block;
+  uintptr_t buddy_addr = block_addr ^ (UINT64_C(1) << block->kval);
+  assert((uintptr_t)buddy == buddy_addr);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test buddy_calc with the last block in the pool.
+ */
+void test_buddy_calc_last_block(void) {
+  fprintf(stderr, "->Testing buddy_calc with the last block\n");
+  struct buddy_pool pool;
+  size_t size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, size);
+
+  struct avail *block = (struct avail *)((uintptr_t)pool.base + size - sizeof(struct avail));
+  block->kval = 4; // Assume block is at kval 4
+  struct avail *buddy = buddy_calc(&pool, block);
+
+  // Calculate expected buddy address
+  uintptr_t block_addr = (uintptr_t)block;
+  uintptr_t buddy_addr = block_addr ^ (UINT64_C(1) << block->kval);
+  assert((uintptr_t)buddy == buddy_addr);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test freeing a valid block and ensuring the pool returns to a full state.
+ */
+void test_buddy_free_valid_block(void) {
+  fprintf(stderr, "->Testing buddy_free with a valid block\n");
+  struct buddy_pool pool;
+  size_t size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, size);
+
+  void *block = buddy_malloc(&pool, 64);
+  assert(block != NULL);
+
+  buddy_free(&pool, block);
+  check_buddy_pool_full(&pool);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test freeing a null pointer and ensuring no changes occur in the pool.
+ */
+void test_buddy_free_null_pointer(void) {
+  fprintf(stderr, "->Testing buddy_free with a null pointer\n");
+  struct buddy_pool pool;
+  size_t size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, size);
+
+  check_buddy_pool_full(&pool); // Ensure pool is initially full
+  buddy_free(&pool, NULL);      // Freeing NULL should do nothing
+  check_buddy_pool_full(&pool); // Pool should remain full
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test freeing a block not allocated by buddy_malloc and ensure undefined behavior is handled.
+ */
+void test_buddy_free_invalid_pointer(void) {
+  fprintf(stderr, "->Testing buddy_free with an invalid pointer\n");
+  struct buddy_pool pool;
+  size_t size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, size);
+
+  int invalid_block;
+  void *invalid_ptr = &invalid_block;
+
+  // Freeing an invalid pointer should not corrupt the pool
+  buddy_free(&pool, invalid_ptr);
+
+  // Check if the pool is still in a valid state
+  check_buddy_pool_full(&pool);
+
+  buddy_destroy(&pool);
+}
+
 
 int main(void) {
 time_t t;
@@ -201,5 +319,11 @@ time_t t;
   RUN_TEST(test_btok_exact_power_of_two);
   RUN_TEST(test_btok_non_power_of_two);
   RUN_TEST(test_btok_large_values);
+  RUN_TEST(test_buddy_calc_middle);
+  RUN_TEST(test_buddy_calc_first_block);
+  RUN_TEST(test_buddy_calc_last_block);
+  RUN_TEST(test_buddy_free_valid_block);
+  RUN_TEST(test_buddy_free_null_pointer);
+  RUN_TEST(test_buddy_free_invalid_pointer);
   return UNITY_END();
 }
