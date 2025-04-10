@@ -404,6 +404,7 @@ void test_buddy_malloc_exhaust_pool(void) {
   }
 
   // Attempt to allocate one more block, which should fail
+  errno = 0; // Reset errno before the call
   void *extra_block = buddy_malloc(&pool, block_size);
   assert(extra_block == NULL);
   assert(errno == ENOMEM);
