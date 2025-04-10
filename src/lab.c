@@ -56,7 +56,7 @@ size_t btok(size_t bytes)
     assert(bytes > 0);
 
     // Add the size of the header to the requested bytes
-    bytes += sizeof(struct avail);
+    //bytes += sizeof(struct avail);
 
     // Initialize K value
     size_t kval = 0;
