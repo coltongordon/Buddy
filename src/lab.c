@@ -158,8 +158,8 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
         return NULL;
     }
 
-    // Add header size to the requested size
-    size += sizeof(struct avail);
+    // Add header size to the requested size and ensure alignment
+    size = (size + sizeof(struct avail) + (UINT64_C(1) << MIN_K) - 1) & ~((UINT64_C(1) << MIN_K) - 1);
 
     // Check if the requested size exceeds the total pool size
     if (size > (UINT64_C(1) << pool->kval_m)) {
@@ -190,12 +190,8 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
             block->prev->next = block->next;
             block->next->prev = block->prev;
 
-            // Check if the block size matches the entire pool size
-            if (i == pool->kval_m) {
-                block->tag = BLOCK_RESERVED; // Mark as reserved if it matches the entire pool size
-            } else {
-                block->tag = BLOCK_USED; // Mark as used for other cases
-            }
+            // Mark the block as used
+            block->tag = BLOCK_USED;
 
             // Set block kval BEFORE splitting (even if not splitting)
             block->kval = i;
@@ -222,15 +218,8 @@ void *buddy_malloc(struct buddy_pool *pool, size_t size)
             if (i == pool->kval_m) {
                 block->tag = BLOCK_RESERVED; // Mark as reserved if it matches the entire pool size
             } else {
-                block->tag = BLOCK_USED; // Mark as used for other cases
-            }
-            
             // Ensure the block's tag is consistent before returning
-            assert(block->tag == BLOCK_RESERVED || block->tag == BLOCK_USED);
-            return (void *)((unsigned char *)block + sizeof(struct avail));
-        }
-    }
-
+            assert(block->tag == BLOCK_USED);
     // No suitable block found
     errno = ENOMEM;
     return NULL;
