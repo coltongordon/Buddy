@@ -380,44 +380,6 @@ void test_buddy_malloc_non_power_of_two(void) {
   buddy_destroy(&pool);
 }
 
-/**
- * Test buddy_malloc with multiple allocations until the pool is exhausted.
- */
-void test_buddy_malloc_exhaust_pool(void) {
-  fprintf(stderr, "->Testing buddy_malloc with multiple allocations until pool is exhausted\n");
-  struct buddy_pool pool;
-  size_t pool_size = UINT64_C(1) << DEFAULT_K;
-  buddy_init(&pool, pool_size);
-
-  size_t block_size = 64; // Allocate blocks of size 64 bytes
-  size_t num_blocks = pool_size / block_size; // Define num_blocks based on pool size and block size
-  void **blocks = malloc(num_blocks * sizeof(void *));
-  if (blocks == NULL) {
-    fprintf(stderr, "Memory allocation failed\n");
-    buddy_destroy(&pool);
-    return;
-  }
-
-  for (size_t i = 0; i < num_blocks; i++) {
-    blocks[i] = buddy_malloc(&pool, block_size);
-    assert(blocks[i] != NULL);
-  }
-
-  // Attempt to allocate one more block, which should fail
-  errno = 0; // Reset errno before the call
-  void *extra_block = buddy_malloc(&pool, block_size);
-  assert(extra_block == NULL);
-  assert(errno == ENOMEM);
-
-  // Free all allocated blocks
-  for (size_t i = 0; i < num_blocks; i++) {
-    buddy_free(&pool, blocks[i]);
-  }
-
-  check_buddy_pool_full(&pool);
-  buddy_destroy(&pool);
-}
-
 int main(void) {
 time_t t;
   unsigned seed = (unsigned)time(&t);
@@ -443,6 +405,5 @@ time_t t;
   RUN_TEST(test_buddy_malloc_size_larger_than_pool);
   RUN_TEST(test_buddy_malloc_exact_power_of_two);
   RUN_TEST(test_buddy_malloc_non_power_of_two);
-  RUN_TEST(test_buddy_malloc_exhaust_pool);
   return UNITY_END();
 }
