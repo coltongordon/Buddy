@@ -258,8 +258,17 @@ void buddy_free(struct buddy_pool *pool, void *ptr)
     struct avail *block = (struct avail *)((unsigned char *)ptr - sizeof(struct avail));
 
     // Validate that the block is within the pool's memory range
-    assert((unsigned char *)block >= (unsigned char *)pool->base);
-    assert((unsigned char *)block < (unsigned char *)pool->base + pool->numbytes);
+    if ((unsigned char *)block < (unsigned char *)pool->base || 
+        (unsigned char *)block >= (unsigned char *)pool->base + pool->numbytes) {
+        fprintf(stderr, "Error: Pointer is out of bounds in buddy_free.\n");
+        return;
+    }
+
+    // Validate that the pointer is aligned to the smallest block size
+    if (((unsigned char *)block - (unsigned char *)pool->base) % (UINT64_C(1) << MIN_K) != 0) {
+        fprintf(stderr, "Error: Pointer is not aligned to the smallest block size in buddy_free.\n");
+        return;
+    }
 
     // Mark the block as available
     block->tag = BLOCK_AVAIL;
