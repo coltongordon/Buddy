@@ -157,6 +157,35 @@ void test_buddy_malloc_multiple_blocks(void) {
 }
 
 
+void test_btok_exact_power_of_two(void) {
+  fprintf(stderr, "->Testing btok with exact power of two\n");
+  assert(btok(1) == 0);  // 2^0 = 1
+  assert(btok(2) == 1);  // 2^1 = 2
+  assert(btok(4) == 2);  // 2^2 = 4
+  assert(btok(8) == 3);  // 2^3 = 8
+  assert(btok(16) == 4); // 2^4 = 16
+  fprintf(stderr, "Passed exact power of two test\n");
+}
+
+void test_btok_non_power_of_two(void) {
+  fprintf(stderr, "->Testing btok with non-power of two values\n");
+  assert(btok(3) == 2);  // 3 <= 2^2
+  assert(btok(5) == 3);  // 5 <= 2^3
+  assert(btok(9) == 4);  // 9 <= 2^4
+  assert(btok(17) == 5); // 17 <= 2^5
+  fprintf(stderr, "Passed non-power of two test\n");
+}
+
+void test_btok_large_values(void) {
+  fprintf(stderr, "->Testing btok with large values\n");
+  assert(btok(1024) == 10);       // 1024 = 2^10
+  assert(btok(2048) == 11);       // 2048 = 2^11
+  assert(btok(4096) == 12);       // 4096 = 2^12
+  assert(btok(5000) == 13);       // 5000 <= 2^13
+  assert(btok(1 << 20) == 20);    // 2^20 = 1 MiB
+  fprintf(stderr, "Passed large values test\n");
+}
+
 
 int main(void) {
 time_t t;
@@ -169,5 +198,8 @@ time_t t;
   RUN_TEST(test_buddy_malloc_one_byte);
   RUN_TEST(test_buddy_malloc_one_large);
   RUN_TEST(test_buddy_malloc_multiple_blocks);
+  RUN_TEST(test_btok_exact_power_of_two);
+  RUN_TEST(test_btok_non_power_of_two);
+  RUN_TEST(test_btok_large_values);
   return UNITY_END();
 }
