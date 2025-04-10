@@ -304,6 +304,124 @@ void test_buddy_free_invalid_pointer(void) {
   buddy_destroy(&pool);
 }
 
+/**
+ * Test buddy_malloc with a NULL pool.
+ */
+void test_buddy_malloc_null_pool(void) {
+  fprintf(stderr, "->Testing buddy_malloc with a NULL pool\n");
+  void *result = buddy_malloc(NULL, 64);
+  assert(result == NULL);
+}
+
+/**
+ * Test buddy_malloc with size 0.
+ */
+void test_buddy_malloc_zero_size(void) {
+  fprintf(stderr, "->Testing buddy_malloc with size 0\n");
+  struct buddy_pool pool;
+  size_t size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, size);
+
+  void *result = buddy_malloc(&pool, 0);
+  assert(result == NULL);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test buddy_malloc with a size larger than the pool.
+ */
+void test_buddy_malloc_size_larger_than_pool(void) {
+  fprintf(stderr, "->Testing buddy_malloc with size larger than pool\n");
+  struct buddy_pool pool;
+  size_t pool_size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, pool_size);
+
+  void *result = buddy_malloc(&pool, pool_size + 1);
+  assert(result == NULL);
+  assert(errno == ENOMEM);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test buddy_malloc with a size that is an exact power of two.
+ */
+void test_buddy_malloc_exact_power_of_two(void) {
+  fprintf(stderr, "->Testing buddy_malloc with exact power of two size\n");
+  struct buddy_pool pool;
+  size_t pool_size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, pool_size);
+
+  void *result = buddy_malloc(&pool, 128); // 128 = 2^7
+  assert(result != NULL);
+
+  buddy_free(&pool, result);
+  check_buddy_pool_full(&pool);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test buddy_malloc with a size that is not a power of two.
+ */
+void test_buddy_malloc_non_power_of_two(void) {
+  fprintf(stderr, "->Testing buddy_malloc with non-power of two size\n");
+  struct buddy_pool pool;
+  size_t pool_size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, pool_size);
+
+  void *result = buddy_malloc(&pool, 150); // 150 is not a power of two
+  assert(result != NULL);
+
+  buddy_free(&pool, result);
+  check_buddy_pool_full(&pool);
+
+  buddy_destroy(&pool);
+}
+
+/**
+ * Test buddy_malloc with multiple allocations until the pool is exhausted.
+ */
+void test_buddy_malloc_exhaust_pool(void) {
+  fprintf(stderr, "->Testing buddy_malloc with multiple allocations until pool is exhausted\n");
+  struct buddy_pool pool;
+  size_t pool_size = UINT64_C(1) << DEFAULT_K;
+  buddy_init(&pool, pool_size);
+
+  size_t block_size = 64; // Allocate blocks of size 64 bytes
+  size_t num_blocks = pool_size / block_size; // Define num_blocks based on pool size and block size
+  void **blocks = malloc(num_blocks * sizeof(void *));
+  if (blocks == NULL) {
+    fprintf(stderr, "Memory allocation failed\n");
+    buddy_destroy(&pool);
+    return;
+  }
+  void **blocks = malloc(num_blocks * sizeof(void *));
+  if (blocks == NULL) {
+    fprintf(stderr, "Memory allocation failed\n");
+    buddy_destroy(&pool);
+    return;
+  }
+
+  for (size_t i = 0; i < num_blocks; i++) {
+    blocks[i] = buddy_malloc(&pool, block_size);
+    assert(blocks[i] != NULL);
+  }
+
+  // Attempt to allocate one more block, which should fail
+  void *extra_block = buddy_malloc(&pool, block_size);
+  assert(extra_block == NULL);
+  assert(errno == ENOMEM);
+
+  // Free all allocated blocks
+  for (size_t i = 0; i < num_blocks; i++) {
+    buddy_free(&pool, blocks[i]);
+  }
+
+  check_buddy_pool_full(&pool);
+  buddy_destroy(&pool);
+}
 
 int main(void) {
 time_t t;
@@ -325,5 +443,11 @@ time_t t;
   RUN_TEST(test_buddy_free_valid_block);
   RUN_TEST(test_buddy_free_null_pointer);
   RUN_TEST(test_buddy_free_invalid_pointer);
+  RUN_TEST(test_buddy_malloc_null_pool);
+  RUN_TEST(test_buddy_malloc_zero_size);
+  RUN_TEST(test_buddy_malloc_size_larger_than_pool);
+  RUN_TEST(test_buddy_malloc_exact_power_of_two);
+  RUN_TEST(test_buddy_malloc_non_power_of_two);
+  RUN_TEST(test_buddy_malloc_exhaust_pool);
   return UNITY_END();
 }
