@@ -146,8 +146,17 @@ struct avail *buddy_calc(struct buddy_pool *pool, struct avail *buddy)
  */
 void *buddy_malloc(struct buddy_pool *pool, size_t size)
 {
-    assert(pool != NULL);
-    assert(size > 0);
+    if (pool == NULL) {
+        fprintf(stderr, "Error: Null pointer passed as pool to buddy_malloc.\n");
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if (size == 0) {
+        fprintf(stderr, "Error: Invalid size (0) passed to buddy_malloc.\n");
+        errno = EINVAL;
+        return NULL;
+    }
 
     // Add header size to the requested size
     size += sizeof(struct avail);
